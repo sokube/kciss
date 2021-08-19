@@ -2,9 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - '*.*.*'
 
 jobs:
 
@@ -18,7 +17,7 @@ jobs:
     
     - name: Get version from tag
       id: get_version_tag
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/*/}
       
     - name: Get the version from file
       id: get_version_file
