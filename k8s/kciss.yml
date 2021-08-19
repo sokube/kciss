@@ -41,7 +41,7 @@ spec:
       serviceAccountName: trivy-server
       containers:
       - name: trivy-server
-        image: docker.registry.local/kciss/trivy-rootless:v0.1.0
+        image: sokube/trivy-rootless
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
@@ -125,7 +125,7 @@ spec:
       serviceAccountName: kciss
       containers:
         - name: kciss
-          image: docker.registry.local/kciss/kciss:v0.1.0
+          image: sokube/kciss
           imagePullPolicy: "Always"
           ports:
             - containerPort: 9300
