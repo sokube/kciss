@@ -1,0 +1,46 @@
+apiVersion: k3d.io/v1alpha2
+kind: Simple
+name: mycluster
+servers: 1
+agents: 1
+kubeAPI:
+  hostPort: "6443"
+image: rancher/k3s:latest
+volumes: 
+  - volume: /usr/local/share/ca-certificates/myca.crt:/etc/ssl/certs/myca.crt
+    nodeFilters:
+      - server[*]
+      - agent[*]
+ports:
+  - port: 1443:443
+    nodeFilters:
+      - loadbalancer
+  - port: 1080:80
+    nodeFilters:
+      - loadbalancer
+registries:
+  create: false
+  config: | # define contents of the `registries.yaml` file (or reference a file); same as `--registry-config /path/to/config.yaml`
+    mirrors:
+      docker.registry.local:
+        endpoint:
+          - https://docker.registry.local
+    configs:
+      docker.registry.local:
+        auth:
+          username: bob
+          password: bobpasswd
+        tls:
+          ca_file: "/etc/ssl/certs/myca.crt"
+  k3d:
+    wait: true
+    timeout: "60s"
+    disableLoadbalancer: false
+    disableImageVolume: false
+  k3s:
+    extraServerArgs:
+      - --tls-san=127.0.0.1
+    extraAgentArgs: []
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true

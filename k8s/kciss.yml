@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kciss
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trivy-server
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-server
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trivy-server
+  template:
+    metadata:
+      labels:
+        app: trivy-server
+    spec:
+      serviceAccountName: trivy-server
+      containers:
+      - name: trivy-server
+        image: docker.registry.local/kciss/trivy-rootless:v0.1.0
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 8080
+        command :
+        - trivy
+        - server
+        - --listen
+        - 0.0.0.0:8080
+      securityContext:
+        runAsUser: 2000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kciss
+  labels:
+    app: trivy-server
+  name: trivy-server
+spec:
+  type: ClusterIP
+  selector:
+    app: trivy-server
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kciss-clusterrole
+  labels:
+    app.kubernetes.io/name: kciss
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - list
+  - read
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kciss-crb
+  labels:
+    app.kubernetes.io/name: kciss
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kciss-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: kciss
+    namespace: kciss
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: kciss
+  name: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kciss
+  template:
+    metadata:
+      labels:
+        app: kciss
+    spec:
+      serviceAccountName: kciss
+      containers:
+        - name: kciss
+          image: docker.registry.local/kciss/kciss:v0.1.0
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 9300
+          command :
+            - kciss
+            - --server
+            - http://trivy-server:8080
+            - --interval
+            - '3600'
+      securityContext:
+        runAsUser: 2000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kciss
+  name: kciss-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/name: kciss
+spec:
+  type: ClusterIP
+  selector:
+    app: kciss
+  ports:
+    - name: metrics
+      port: 9300
+      protocol: TCP
+      targetPort: 9300

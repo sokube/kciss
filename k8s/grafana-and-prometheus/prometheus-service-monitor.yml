@@ -1,0 +1,14 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kciss-service-monitor
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kciss
+  endpoints:
+    - port: metrics
