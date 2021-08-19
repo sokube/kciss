@@ -45,6 +45,6 @@ jobs:
 
     - name: Push the trivy-rootless image
       run: |
-        docker tag sokube/trivy-rootless:${{ steps.get_version_tag.outputs.VERSION }} sokube/trivy-rootless:latest
+        docker tag sokube/trivy-rootless:${{ steps.get_version_file.outputs.VERSION }} sokube/trivy-rootless:latest
         docker push sokube/trivy-rootless:${{ steps.get_version_file.outputs.VERSION }}
         docker push sokube/trivy-rootless:latest
