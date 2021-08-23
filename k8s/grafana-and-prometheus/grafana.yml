@@ -1192,7 +1192,7 @@ data:
         "list": []
       },
       "time": {
-        "from": "now-6h",
+        "from": "now-1h",
         "to": "now"
       },
       "timepicker": {},
@@ -1222,7 +1222,7 @@ spec:
       serviceAccountName: grafana
       containers:
       - name: grafana-container
-        image: grafana/grafana:8.0.4
+        image: grafana/grafana:8.1.2
         ports:
         - containerPort: 3000
         volumeMounts:

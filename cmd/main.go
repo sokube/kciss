@@ -87,6 +87,9 @@ func Run(interval int, trivyserver string, trivypath string) {
 			for ns, occurence := range imagesInNamespaces[v] {
 				namespaces[ns] = namespaces[ns].Add(images[v].Mult(occurence))
 			}
+
+			// Prevent bursts
+			time.Sleep(20 * time.Second)
 		}
 
 		log.Info().Msg("---> Images Vulnerabilities Summary")

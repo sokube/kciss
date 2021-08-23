@@ -4,7 +4,7 @@ name: mycluster
 servers: 1
 agents: 1
 kubeAPI:
-  hostPort: "6443"
+  hostPort: "16443"
 image: rancher/k3s:latest
 ports:
   - port: 1443:443
@@ -13,6 +13,7 @@ ports:
   - port: 1080:80
     nodeFilters:
       - loadbalancer
+options:
   k3d:
     wait: true
     timeout: "60s"

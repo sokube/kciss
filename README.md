@@ -18,5 +18,5 @@ kubectl apply -f k8s/
 kubectl apply -f k8s/grafana-and-prometheus
 ```
 
-Wait for all the pods to be up & running and open a web browser on http://localhost/d/jJAl3im7z/my-cluster-vulnerabilities?orgId=1&refresh=5s
+Wait for all the pods to be up & running and open a web browser on http://localhost:16443/d/jJAl3im7z/my-cluster-vulnerabilities?orgId=1&refresh=5s
 (Note: grafana is using admin/admin by default)
