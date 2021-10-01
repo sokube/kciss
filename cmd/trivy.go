@@ -30,7 +30,7 @@ func TrivyScanImage(trivyserver string, trivypath string, image string, registri
 
 	// Use either client-server mode or standalone
 	var trivy *exec.Cmd
-	trivy = exec.Command("/bin/sh", "-c", trivypath+" client --remote "+trivyserver+" -f json "+image+" | grep -v WARN")
+	trivy = exec.Command(trivypath, "--quiet", "client", "-remote", trivyserver, "-f", "json", image)
 
 	//If image needs an auth, add env vars for private registry
 	trivy.Env = os.Environ()
@@ -50,7 +50,7 @@ func TrivyScanImage(trivyserver string, trivypath string, image string, registri
 	var output []byte
 	output, err = trivy.Output()
 	if err != nil {
-		log.Error().Interface("Cmd", trivy).Msg("Error while executing trivy")
+		log.Error().Interface("Cmd", trivy).Err(err).Msg("Error while executing trivy")
 		return
 	}
 

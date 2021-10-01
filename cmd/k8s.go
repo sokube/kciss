@@ -88,7 +88,7 @@ func ClusterImageCatalog(clientset *kubernetes.Clientset) (ns map[string]VulnSum
 				imgs_ns[container.Image] = make(map[string]uint32)
 			}
 			imgs_ns[container.Image][pod.ObjectMeta.Namespace] += 1
-			log.Logger.Debug().Uint32("counter", imgs_ns[container.Image][pod.ObjectMeta.Namespace]).Str("image", container.Image).Str("namespace", pod.ObjectMeta.Namespace).Msg("Namespace/Image collected")
+			log.Logger.Debug().Uint32("counter", imgs_ns[container.Image][pod.ObjectMeta.Namespace]).Str("Pod", pod.Name).Str("Container", container.Name).Str("image", container.Image).Str("namespace", pod.ObjectMeta.Namespace).Msg("Namespace/Image collected")
 		}
 	}
 	return

@@ -45,11 +45,8 @@ spec:
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
-        command :
-        - trivy
-        - server
-        - --listen
-        - 0.0.0.0:8080
+        command: ["/usr/local/bin/trivy"]
+        args: ["server", "--listen", "0.0.0.0:8080"]
       securityContext:
         runAsUser: 2000
 ---
@@ -125,16 +122,12 @@ spec:
       serviceAccountName: kciss
       containers:
         - name: kciss
-          image: sokube/kciss
-          imagePullPolicy: "Always"
+          image: sokube/kciss:latest
+          imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 9300
-          command :
-            - kciss
-            - --server
-            - http://trivy-server:8080
-            - --interval
-            - '3600'
+          command: ["kciss"]
+          args: ["--server", "http://trivy-server:8080", "--interval", "3600"]
       securityContext:
         runAsUser: 2000
 ---

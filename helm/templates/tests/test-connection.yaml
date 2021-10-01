@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "kciss.fullname" . }}-test-connection"
+  labels:
+    {{- include "kciss.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "kciss.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

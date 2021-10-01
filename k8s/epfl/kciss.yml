@@ -1,0 +1,258 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kciss
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trivy-server
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: trivy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-server
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: trivy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kciss
+      app.kubernetes.io/component: trivy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kciss
+        app.kubernetes.io/component: trivy
+    spec:
+      serviceAccountName: trivy-server
+      containers:
+      - name: trivy-server
+        image: sokube/trivy-rootless
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 8080
+        command :
+        - trivy
+        - server
+        - --listen
+        - 0.0.0.0:8080
+      securityContext:
+        runAsUser: 2000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: trivy
+  name: trivy-server
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: trivy
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kciss-clusterrole
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - list
+  - read
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kciss-crb
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kciss-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: kciss
+    namespace: kciss
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-epfl
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+data:
+  ca.pem: |
+    -----BEGIN CERTIFICATE-----
+    MIIDUTCCAjmgAwIBAgIVAOXectAvXyN+tXXciaszRa7vPOqfMA0GCSqGSIb3DQEB
+    CwUAMB8xCzAJBgNVBAYTAlVTMRAwDgYDVQQKDAdQaXZvdGFsMB4XDTIxMDUxMTEz
+    MzgzMVoXDTI1MDUxMjEzMzgzMVowHzELMAkGA1UEBhMCVVMxEDAOBgNVBAoMB1Bp
+    dm90YWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDZskhD+KUM9br+
+    /EVdvNo3crNxNgMzXoYfV7CXVsdLkj0H4w1c9ZXmsXLN4kNkIjPRxAtkCpekmCzx
+    c+143YDWxB8jr8JCR0rmcLECgGlUFSFA7/t/Bq++FQ9o+sg2iYNpPOxT3X3aolEe
+    WJOHXjACZXrb9z1snua5TDgJ+8mgSJHKw8Js1QImr8USCS9FXF1A1fVlNTQyhTDb
+    Ojs/mEhsML+WpJ2onH4yQgX0NKI0vkOXGDkoVkUbXt/euFHPJ6Cnl8i5pxLp5/Oj
+    k5TeYfaVTzth5qj0yJZs5uJmKJo9zinXBjRYRlHLPWaJGZVS/JarxekMfUiycMdm
+    WUZBG41tAgMBAAGjgYMwgYAwHQYDVR0OBBYEFJJHsnDxJ69sfUr/qFDuwieQErfq
+    MB8GA1UdIwQYMBaAFJJHsnDxJ69sfUr/qFDuwieQErfqMB0GA1UdJQQWMBQGCCsG
+    AQUFBwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIB
+    BjANBgkqhkiG9w0BAQsFAAOCAQEAFxJSKPcTe7aPzoZjnwUgqMtP5hOD9nPCM2jr
+    wXlUIOloacZco0OGn8CDPFbGeHRxb6GpgoTWja0bS1ub7o3h2wOhlxJYG/S58CaU
+    i/4NCaXbcTnuvPk3yOa6IduAs/oEUkuRhvybhGNBPsouhzvzm8BmRe5nuQseGQbw
+    ysSkmFTXesfoUB+LomrhYs6MvstDNelv0sMd9lVYwlhXnJiEElkxM96wQc0LKvF6
+    rM4MmI1Ye2oWJlLoBiXMjAj0aw+feUR0RNERZX9NBFIOlahfYoqWniO2FfQmlStC
+    3YoreXpSY6Tn9iXNuayB5tItE4IHyOPXrl1rKe3SF8uo4VJYKA==
+    -----END CERTIFICATE-----
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: kciss
+  name: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kciss
+      app.kubernetes.io/component: kciss
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kciss
+        app.kubernetes.io/component: kciss
+    spec:
+      serviceAccountName: kciss
+      containers:
+      - name: kciss
+        image: sokube/kciss:latest
+        imagePullPolicy: "Always"
+        ports:
+          - containerPort: 9300
+        command :
+          - kciss
+          - --server
+          - http://trivy-server:8080
+          - --interval
+          - '3600'
+        volumeMounts:
+        - mountPath: /etc/ssl/certs/ca.pem
+          name: ca-epfl
+          subPath: ca.pem
+      securityContext:
+        runAsUser: 2000
+      volumes:
+      - name: ca-epfl
+        configMap:
+          defaultMode: 420
+          name: ca-epfl
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kciss
+  name: kciss-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+  ports:
+    - name: metrics
+      port: 9300
+      protocol: TCP
+      targetPort: 9300
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: prometheus
+  name: kciss-metrics
+  namespace: kciss
+spec:
+  endpoints:
+  - port: metrics
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: kciss
+      app.kubernetes.io/name: kciss
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: service-prometheus
+    role: alert-rules
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: prometheus
+  name: kciss-rules
+  namespace: kciss
+spec:
+  groups:
+  - name: general.rules
+    rules:
+    - alert: application-workloads-vulnerabilities-detected
+      annotations:
+        description: Namespace {{ $labels.namespace }} has {{ $value }} critical vulnerabilities reported
+        summary: Critical vulnerabilities in cluster application workloads
+      expr: namespace_vulnerabilities_total{severity="critical", namespace!~"logging|monitoring|pks-system|projectcontour|kube-system"} > 0
+      for: 10m
+      labels:
+        severity: critical
+    - alert: system-workloads-vulnerabilities-detected
+      annotations:
+        description: Namespace {{ $labels.namespace }} has {{ $value }} critical vulnerabilities reported
+        summary: Critical vulnerabilities in cluster system workloads
+      expr: namespace_vulnerabilities_total{severity="critical", namespace=~"logging|monitoring|pks-system|projectcontour|kube-system"} > 0
+      for: 10m
+      labels:
+        severity: critical

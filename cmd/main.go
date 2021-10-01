@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -17,6 +18,32 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// Structure for configuration command line parameters
+type KcissConfig struct {
+	TrivyBinaryPath     string
+	TrivyServer         string
+	ClusterScanInterval uint64
+	ImageScanExpiration uint64
+}
+
+// Various Vulnerabilities Levels
+const CRITICAL = 0
+const HIGH = 1
+const MEDIUM = 2
+const LOW = 3
+const UNKNOWN = 4
+
+// Structure for the cluster image catalog
+type ClusterImageCatalogEntry struct {
+	Image           string      // image
+	Namespaces      []string    // namespaces that run this image
+	LastScanned     time.Time   // last time it was scanned
+	ScanSucceeded   bool        // Whether the scan succeeded
+	Vulnerabilities [5][]string // Vulnerabilities report [LEVEL][CVE,CVE2,etc]
+	FlagForRemoval  bool        // This entry should be removed (ie last cluster scan did not find this image at all)
+}
+
+// Prometheus metrics
 var (
 	namespacesVulnsReported = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "namespace_vulnerabilities_total",
@@ -34,18 +61,51 @@ func main() {
 	log.Info().Msg("kciss starting")
 
 	// Retrieve command flags
-	interval := flag.Int("interval", 300, "Interval for metrics reporting in seconds")
-	trivyServer := flag.String("server", "", "Address of the trivy server")
-	trivyBinary := flag.String("trivy", "/usr/local/bin/trivy", "Path to the trivy binary")
+	var config KcissConfig
+	flag.Uint64Var(&config.ClusterScanInterval, "interval", 300, "Interval for metrics reporting in seconds")
+	flag.Uint64Var(&config.ImageScanExpiration, "expire", 60, "Image scan results validity in seconds")
+	flag.StringVar(&config.TrivyServer, "server", "", "Address of the trivy server")
+	flag.StringVar(&config.TrivyBinaryPath, "StringVarrivy", "/usr/local/bin/trivy", "Path to the trivy binary")
 	flag.Parse()
+	log.Debug().Interface("config", config).Msg("Config parsed")
 
 	log.Info().Msg("Starting metrics server on :9300")
 	http.Handle("/metrics", promhttp.Handler())
-	go Run(int(*interval), *trivyServer, *trivyBinary)
+	go Run(config.ClusterScanInterval, config.ImageScanExpiration, config.TrivyServer, config.TrivyBinaryPath)
+	go ImageScanningWorker(config.ClusterScanInterval, config.ImageScanExpiration, config.TrivyServer, config.TrivyBinaryPath)
 	http.ListenAndServe(":9300", nil)
 }
 
-func Run(interval int, trivyserver string, trivypath string) {
+/*
+	x, y := 0, 1
+	for {
+		select {
+		case c <- x:
+			x, y = y, x+y
+		case <-quit:
+			fmt.Println("quit")
+			return
+		}
+	}*/
+
+func ImageScanningWorker(images chan string, quit chan int, config KcissConfig) {
+	// Endless loop
+	var image string
+	for {
+		select {
+		case images <- image:
+			log.Info().Str("image", image).Msg("Processing Image")
+			time.Sleep(time.Duration(config.ImageScanExpiration) * time.Second)
+			log.Info().Str("image", image).Msg("Processed")
+
+		case <-quit:
+			fmt.Println("quit")
+			return
+		}
+	}
+}
+
+func Run(interval uint64, expire uint64, trivyserver string, trivypath string) {
 	// creates the in-cluster config
 	log.Info().Msg("Create incluster config")
 	config, err := rest.InClusterConfig()
@@ -64,10 +124,11 @@ func Run(interval int, trivyserver string, trivypath string) {
 	for {
 		log.Info().Msg("Starting cluster analysis")
 
-		log.Info().Msg("Starting secrets collection")
+		log.Info().Msg("Collecting secrets")
 		registries := LocalDockerConfigSecrets(clientset)
 
 		// Creates the cluster images & namespaces catalog
+		log.Info().Msg("Collecting images")
 		namespaces, images, imagesInNamespaces, err := ClusterImageCatalog(clientset)
 		if err != nil {
 			log.Fatal().Err(err)
@@ -89,7 +150,7 @@ func Run(interval int, trivyserver string, trivypath string) {
 			}
 
 			// Prevent bursts
-			time.Sleep(20 * time.Second)
+			time.Sleep(time.Duration(expire) * time.Second)
 		}
 
 		log.Info().Msg("---> Images Vulnerabilities Summary")
