@@ -1,0 +1,151 @@
+{{- if .Values.kciss.serviceAccount.create -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "kciss.kciss.serviceAccountName" . }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+{{- end -}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - read
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "kciss.kciss.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kciss.kciss.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+---
+{{- if .Values.kciss.serviceAccount.create -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-epfl
+  namespace: kciss
+  labels:
+    app.kubernetes.io/name: kciss
+    app.kubernetes.io/component: kciss
+data:
+  ca.pem: |
+    -----BEGIN CERTIFICATE-----
+    MIIDUTCCAjmgAwIBAgIVAOXectAvXyN+tXXciaszRa7vPOqfMA0GCSqGSIb3DQEB
+    CwUAMB8xCzAJBgNVBAYTAlVTMRAwDgYDVQQKDAdQaXZvdGFsMB4XDTIxMDUxMTEz
+    MzgzMVoXDTI1MDUxMjEzMzgzMVowHzELMAkGA1UEBhMCVVMxEDAOBgNVBAoMB1Bp
+    dm90YWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDZskhD+KUM9br+
+    /EVdvNo3crNxNgMzXoYfV7CXVsdLkj0H4w1c9ZXmsXLN4kNkIjPRxAtkCpekmCzx
+    c+143YDWxB8jr8JCR0rmcLECgGlUFSFA7/t/Bq++FQ9o+sg2iYNpPOxT3X3aolEe
+    WJOHXjACZXrb9z1snua5TDgJ+8mgSJHKw8Js1QImr8USCS9FXF1A1fVlNTQyhTDb
+    Ojs/mEhsML+WpJ2onH4yQgX0NKI0vkOXGDkoVkUbXt/euFHPJ6Cnl8i5pxLp5/Oj
+    k5TeYfaVTzth5qj0yJZs5uJmKJo9zinXBjRYRlHLPWaJGZVS/JarxekMfUiycMdm
+    WUZBG41tAgMBAAGjgYMwgYAwHQYDVR0OBBYEFJJHsnDxJ69sfUr/qFDuwieQErfq
+    MB8GA1UdIwQYMBaAFJJHsnDxJ69sfUr/qFDuwieQErfqMB0GA1UdJQQWMBQGCCsG
+    AQUFBwMCBggrBgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIB
+    BjANBgkqhkiG9w0BAQsFAAOCAQEAFxJSKPcTe7aPzoZjnwUgqMtP5hOD9nPCM2jr
+    wXlUIOloacZco0OGn8CDPFbGeHRxb6GpgoTWja0bS1ub7o3h2wOhlxJYG/S58CaU
+    i/4NCaXbcTnuvPk3yOa6IduAs/oEUkuRhvybhGNBPsouhzvzm8BmRe5nuQseGQbw
+    ysSkmFTXesfoUB+LomrhYs6MvstDNelv0sMd9lVYwlhXnJiEElkxM96wQc0LKvF6
+    rM4MmI1Ye2oWJlLoBiXMjAj0aw+feUR0RNERZX9NBFIOlahfYoqWniO2FfQmlStC
+    3YoreXpSY6Tn9iXNuayB5tItE4IHyOPXrl1rKe3SF8uo4VJYKA==
+    -----END CERTIFICATE-----
+{{- end -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kciss
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kciss.kciss.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kciss.kciss.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "kciss.kciss.serviceAccountName" . }}
+      containers:
+        - name: kciss
+          image: "{{ .Values.kciss.image.repository }}:{{ .Values.kciss.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.kciss.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.kciss.port }}
+          command:
+            - kciss
+            - --server
+            - "http://{{ template "kciss.trivy.fullname" . }}:{{ .Values.trivy.port }}"
+            - --interval
+            - "{{ .Values.kciss.interval }}"
+          volumeMounts:
+            - mountPath: /etc/ssl/certs/ca.pem
+              name: ca-epfl
+              subPath: ca.pem
+          securityContext:
+            {{- toYaml .Values.kciss.containerSecurityContext | nindent 12 }}
+      {{- with .Values.kciss.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kciss.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kciss.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: ca-epfl
+          configMap:
+            defaultMode: 420
+            name: ca-epfl
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  {{- with .Values.kciss.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "kciss.kciss.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      port: {{ .Values.kciss.port }}
+      protocol: TCP
+      targetPort: {{ .Values.kciss.port }}
