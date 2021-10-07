@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  kciss:
+  - apiVersion: v2
+    appVersion: 0.1.2
+    created: "2021-10-07T13:49:36.701387944+02:00"
+    description: Kubernetes Continuous Image Scanning System
+    digest: 7a2a1e608515c6fa72f20aa898fcd5386cfc82ab7c6eb992fe9326a434580be5
+    name: kciss
+    type: application
+    urls:
+    - https://sokube.github.io/kciss/kciss-0.1.2.tgz
+    version: 0.1.2
+generated: "2021-10-07T13:49:36.70084036+02:00"
