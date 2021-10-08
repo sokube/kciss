@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kciss
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kciss.kciss.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kciss.kciss.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "kciss.kciss.serviceAccountName" . }}
+      containers:
+        - name: kciss
+          image: "{{ .Values.kciss.image.repository }}:{{ .Values.kciss.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.kciss.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.kciss.port }}
+          command:
+            - kciss
+            - --endpoint
+            - "{{ .Values.kciss.endpoint }}"
+            - --interval
+            - "{{ .Values.kciss.interval }}"
+            - --server
+            - "http://{{ template "kciss.trivy.fullname" . }}:{{ .Values.trivy.port }}"
+          {{ if .Values.customRootCertificate }}
+          volumeMounts:
+            - mountPath: /etc/ssl/certs/ca.pem
+              name: ca-volume
+              subPath: ca.pem
+          {{ end }}
+          securityContext:
+            {{- toYaml .Values.kciss.containerSecurityContext | nindent 12 }}
+      {{ with .Values.kciss.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{ end }}
+      {{ with .Values.kciss.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{ end }}
+      {{ with .Values.kciss.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{ end }}
+      {{ if .Values.customRootCertificate -}}
+      volumes:
+        - name: ca-volume
+          configMap:
+            defaultMode: 420
+            name: {{ template "kciss.fullname" . }}-root-ca
+      {{ end }}

@@ -1,0 +1,13 @@
+{{- if .Values.customRootCertificate -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kciss.fullname" . }}-root-ca
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+data:
+  {{- with .Values.customRootCertificate }}
+  ca.pem:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end -}}

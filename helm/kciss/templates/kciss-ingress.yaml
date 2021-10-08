@@ -1,0 +1,27 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.address }}
+    secretName: {{ template "kciss.kciss.fullname" . }}-tls-secret
+  rules:
+  - http:
+      paths:
+      - path: {{ .Values.kciss.endpoint }}
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ template "kciss.kciss.fullname" . }}
+            port: 
+              number: {{ .Values.kciss.port }}
+{{- end -}}

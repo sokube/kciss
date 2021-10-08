@@ -37,10 +37,11 @@ func main() {
 	interval := flag.Int("interval", 300, "Interval for metrics reporting in seconds")
 	trivyServer := flag.String("server", "", "Address of the trivy server")
 	trivyBinary := flag.String("trivy", "/usr/local/bin/trivy", "Path to the trivy binary")
+	endPoint := flag.String("endpoint", "/kciss-metrics", "endpoint for metrics")
 	flag.Parse()
 
 	log.Info().Msg("Starting metrics server on :9300")
-	http.Handle("/metrics", promhttp.Handler())
+	http.Handle(*endPoint, promhttp.Handler())
 	go Run(int(*interval), *trivyServer, *trivyBinary)
 	http.ListenAndServe(":9300", nil)
 }

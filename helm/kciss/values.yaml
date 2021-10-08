@@ -6,13 +6,12 @@ kciss:
   replicaCount: 1
   port: 9300
   interval: 3600
+  endpoint: "/kciss-metrics"
   image:
-    repository: sokube/trivy-rootless
-    tag: 0.1.2
+    repository: sokube/kciss
     pullPolicy: IfNotPresent
   serviceAccount:
     create: true
-    name: kciss
   containerSecurityContext:
     runAsUser: 2000
   resources: {}
@@ -20,18 +19,17 @@ kciss:
   tolerations: []
   affinity: {}
   serviceAnnotations:
-    - prometheus.io/scrape: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/kciss-metrics"
 
 trivy:
   replicaCount: 1
   port: 8080
   image:
-    repository: sokube/trivy-rootless
+    repository: sokube/kciss
     pullPolicy: IfNotPresent
-    tag: 0.1.2
   serviceAccount:
     create: true
-    name: trivy
   containerSecurityContext:
     runAsUser: 2000
   resources: {}
@@ -42,32 +40,6 @@ trivy:
 podAnnotations: {}
 imagePullSecrets: []
 
-prometheus:
-  serviceMonitor:
-    metricRelabeling:
-      []
-      # - sourceLabels:
-      #     - __address__
-      #   targetLabel: project
-      #   replacement: svc0041wbhst
-      # - sourceLabels:
-      #     - __address__
-      #   targetLabel: line
-      #   replacement: test
-  alertRules:
-    - alert: application-workloads-vulnerabilities-detected
-      annotations:
-        description: Namespace {{ $labels.namespace }} has {{ $value }} critical vulnerabilities reported
-        summary: Critical vulnerabilities in cluster application workloads
-      expr: namespace_vulnerabilities_total{severity="critical", namespace!~"logging|monitoring|pks-system|projectcontour|kube-system"} > 0
-      for: 10m
-      labels:
-        severity: critical
-    - alert: system-workloads-vulnerabilities-detected
-      annotations:
-        description: Namespace {{ $labels.namespace }} has {{ $value }} critical vulnerabilities reported
-        summary: Critical vulnerabilities in cluster system workloads
-      expr: namespace_vulnerabilities_total{severity="critical", namespace=~"logging|monitoring|pks-system|projectcontour|kube-system"} > 0
-      for: 10m
-      labels:
-        severity: critical
+ingress:
+  enabled: false
+  address: "mycluster.example.com"

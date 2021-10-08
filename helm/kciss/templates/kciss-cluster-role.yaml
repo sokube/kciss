@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kciss.kciss.fullname" . }}
+  labels:
+    {{- include "kciss.kciss.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - read
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list

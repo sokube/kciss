@@ -119,3 +119,14 @@ Create the name of the service account to use for trivy deployment
 {{- default "default" .Values.trivy.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate self-signed certificate for ingress
+*/}}
+{{- define "ingress.self-signed.cert" -}}
+{{- $altNames := list ( printf "%s" .Values.ingress.address ) -}}
+{{- $ca := genCA "ingress-ca" 3650 -}}
+{{- $cert := genSignedCert ( include "kciss.kciss.fullname" . ) nil $altNames 3650 $ca -}}
+tls.crt: {{ $cert.Cert | b64enc }}
+tls.key: {{ $cert.Key | b64enc }}
+{{- end -}}

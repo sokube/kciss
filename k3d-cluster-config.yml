@@ -7,10 +7,10 @@ kubeAPI:
   hostPort: "16443"
 image: rancher/k3s:latest
 ports:
-  - port: 1443:443
+  - port: 443:443
     nodeFilters:
       - loadbalancer
-  - port: 1080:80
+  - port: 80:80
     nodeFilters:
       - loadbalancer
 options:
