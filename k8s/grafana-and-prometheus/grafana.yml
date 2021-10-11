@@ -83,6 +83,12 @@ data:
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
             "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
             "type": "dashboard"
           }
         ]
@@ -108,7 +114,7 @@ data:
           "type": "row"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -154,7 +160,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
@@ -171,7 +177,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -217,7 +223,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
@@ -234,7 +240,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -280,7 +286,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
@@ -297,7 +303,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -343,7 +349,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
@@ -360,7 +366,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -467,7 +473,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(namespace_vulnerabilities_total) by (severity)",
+              "expr": "sort_desc(sum(namespace_vulnerabilities_total) by (severity))",
               "instant": true,
               "interval": "",
               "legendFormat": "{{severity}}",
@@ -476,11 +482,12 @@ data:
             }
           ],
           "title": "Distribution",
+          "transformations": [],
           "transparent": true,
           "type": "piechart"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -646,7 +653,7 @@ data:
           "type": "row"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -693,11 +700,11 @@ data:
             "text": {},
             "textMode": "value_and_name"
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
-              "expr": "namespace_vulnerabilities_total{severity=\"critical\"}>0",
+              "expr": "sum(namespace_vulnerabilities_total{severity=\"critical\"}>0) by (namespace)",
               "format": "table",
               "hide": false,
               "instant": true,
@@ -710,21 +717,14 @@ data:
           "title": "Critical",
           "transformations": [
             {
-              "id": "organize",
+              "id": "sortBy",
               "options": {
-                "excludeByName": {
-                  "Time": true,
-                  "__name__": true,
-                  "app_kubernetes_io_name": true,
-                  "instance": true,
-                  "job": true,
-                  "kubernetes_name": true,
-                  "kubernetes_namespace": true,
-                  "kubernetes_node": true,
-                  "severity": true
-                },
-                "indexByName": {},
-                "renameByName": {}
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "namespace"
+                  }
+                ]
               }
             }
           ],
@@ -746,7 +746,7 @@ data:
           "type": "row"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -897,11 +897,11 @@ data:
             "showHeader": true,
             "sortBy": []
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
-              "expr": "namespace_vulnerabilities_total{severity=\"critical\"}",
+              "expr": "sum(namespace_vulnerabilities_total{severity=\"critical\"}) by (namespace,severity)",
               "instant": true,
               "interval": "",
               "legendFormat": "",
@@ -910,7 +910,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "namespace_vulnerabilities_total{severity=\"high\"}",
+              "expr": "sum(namespace_vulnerabilities_total{severity=\"high\"}) by (namespace,severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -919,7 +919,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "namespace_vulnerabilities_total{severity=\"medium\"}",
+              "expr": "sum(namespace_vulnerabilities_total{severity=\"medium\"}) by (namespace,severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -928,7 +928,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "namespace_vulnerabilities_total{severity=\"low\"}",
+              "expr": "sum(namespace_vulnerabilities_total{severity=\"low\"}) by (namespace,severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -959,13 +959,24 @@ data:
                 "indexByName": {},
                 "renameByName": {}
               }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "namespace"
+                  }
+                ]
+              }
             }
           ],
           "transparent": true,
           "type": "table"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "${Cluster}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1116,11 +1127,11 @@ data:
             "showHeader": true,
             "sortBy": []
           },
-          "pluginVersion": "8.0.4",
+          "pluginVersion": "8.1.2",
           "targets": [
             {
               "exemplar": true,
-              "expr": "image_vulnerabilities_total{severity=\"critical\"}",
+              "expr": "sum(image_vulnerabilities_total{severity=\"critical\"}) by (image, severity)",
               "instant": true,
               "interval": "",
               "legendFormat": "",
@@ -1129,7 +1140,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "image_vulnerabilities_total{severity=\"high\"}",
+              "expr": "sum(image_vulnerabilities_total{severity=\"high\"}) by (image, severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -1138,7 +1149,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "image_vulnerabilities_total{severity=\"medium\"}",
+              "expr": "sum(image_vulnerabilities_total{severity=\"medium\"}) by (image, severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -1147,7 +1158,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "image_vulnerabilities_total{severity=\"low\"}",
+              "expr": "sum(image_vulnerabilities_total{severity=\"low\"}) by (image, severity)",
               "hide": false,
               "instant": true,
               "interval": "",
@@ -1178,6 +1189,17 @@ data:
                 "indexByName": {},
                 "renameByName": {}
               }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "image"
+                  }
+                ]
+              }
             }
           ],
           "transparent": true,
@@ -1189,17 +1211,38 @@ data:
       "style": "dark",
       "tags": [],
       "templating": {
-        "list": []
+        "list": [
+          {
+            "current": {
+              "selected": false,
+              "text": "Prometheus",
+              "value": "Prometheus"
+            },
+            "description": "Source Cluster",
+            "error": null,
+            "hide": 0,
+            "includeAll": false,
+            "label": null,
+            "multi": false,
+            "name": "Cluster",
+            "options": [],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          }
+        ]
       },
       "time": {
-        "from": "now-1h",
+        "from": "now-6h",
         "to": "now"
       },
       "timepicker": {},
       "timezone": "",
       "title": "My Cluster Vulnerabilities",
       "uid": "jJAl3im7z",
-      "version": 4
+      "version": 2
     }
 ---
 apiVersion: apps/v1
@@ -1221,47 +1264,47 @@ spec:
     spec:
       serviceAccountName: grafana
       containers:
-      - name: grafana-container
-        image: grafana/grafana:8.1.2
-        ports:
-        - containerPort: 3000
-        volumeMounts:
-        - name: grafana-local-volume
-          mountPath: /var/lib/grafana
-        - name: grafana-config-volume
-          mountPath: /etc/grafana
-        - name: grafana-datasources-config-volume
-          mountPath: /etc/grafana/provisioning/datasources
-        - name: grafana-dashboards-config-volume
-          mountPath: /etc/grafana/provisioning/dashboards
-        - name: grafana-dashboards-jsons-config-volume
-          mountPath: /etc/grafana/dashboards        
-        securityContext:
-          runAsUser: 472
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-        resources:
-          limits: 
-            cpu: 250m
-            memory: 250Mi
-          requests:
-            cpu: 120m
-            memory: 100Mi
+        - name: grafana-container
+          image: grafana/grafana:8.1.2
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: grafana-local-volume
+              mountPath: /var/lib/grafana
+            - name: grafana-config-volume
+              mountPath: /etc/grafana
+            - name: grafana-datasources-config-volume
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboards-config-volume
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboards-jsons-config-volume
+              mountPath: /etc/grafana/dashboards
+          securityContext:
+            runAsUser: 472
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          resources:
+            limits:
+              cpu: 250m
+              memory: 250Mi
+            requests:
+              cpu: 120m
+              memory: 100Mi
       volumes:
-      - name: grafana-config-volume
-        configMap:
-          name: grafana-config
-      - name: grafana-datasources-config-volume
-        configMap:
-          name: grafana-datasources-config
-      - name: grafana-dashboards-config-volume
-        configMap:
-          name: grafana-dashboards-config
-      - name: grafana-dashboards-jsons-config-volume
-        configMap:
-          name: grafana-dashboards-jsons-config
-      - name: grafana-local-volume
-        emptyDir: {}
+        - name: grafana-config-volume
+          configMap:
+            name: grafana-config
+        - name: grafana-datasources-config-volume
+          configMap:
+            name: grafana-datasources-config
+        - name: grafana-dashboards-config-volume
+          configMap:
+            name: grafana-dashboards-config
+        - name: grafana-dashboards-jsons-config-volume
+          configMap:
+            name: grafana-dashboards-jsons-config
+        - name: grafana-local-volume
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -1275,10 +1318,10 @@ spec:
   selector:
     app: grafana
   ports:
-  - name: http
-    port: 3000
-    protocol: TCP
-    targetPort: 3000
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -1289,12 +1332,12 @@ metadata:
     app: grafana
 spec:
   rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: grafana
-            port: 
-              number: 3000
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
