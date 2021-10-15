@@ -15,7 +15,8 @@ spec:
     - {{ .Values.ingress.address }}
     secretName: {{ template "kciss.kciss.fullname" . }}-tls-secret
   rules:
-  - http:
+  - host: {{ .Values.ingress.address }}
+    http:
       paths:
       - path: {{ .Values.kciss.endpoint }}
         pathType: Prefix
