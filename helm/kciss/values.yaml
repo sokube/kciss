@@ -5,6 +5,7 @@
 kciss:
   replicaCount: 1
   port: 9300
+  targetPort: 9300
   interval: 3600
   endpoint: "/kciss-metrics"
   image:
@@ -21,6 +22,8 @@ kciss:
   serviceAnnotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/kciss-metrics"
+  extraContainers: []
+  extraVolumes: []
 
 trivy:
   replicaCount: 1

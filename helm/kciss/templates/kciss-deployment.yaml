@@ -38,6 +38,9 @@ spec:
           {{ end }}
           securityContext:
             {{- toYaml .Values.kciss.containerSecurityContext | nindent 12 }}
+        {{ with  .Values.kciss.extraContainers }}
+          {{-  toYaml . | nindent 8}}
+        {{- end }}
       {{ with .Values.kciss.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -50,10 +53,15 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{ end }}
-      {{ if .Values.customRootCertificate -}}
+      {{ if or .Values.customRootCertificate  .Values.kciss.extraVolumes -}}
       volumes:
+        {{- if .Values.customRootCertificate }}
         - name: ca-volume
           configMap:
             defaultMode: 420
             name: {{ template "kciss.fullname" . }}-root-ca
-      {{ end }}
+        {{ end }}
+        {{- with .Values.kciss.extraVolumes }}
+           {{- toYaml . | nindent 8 }}
+        {{ end -}}
+      {{ end -}}
