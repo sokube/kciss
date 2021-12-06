@@ -16,4 +16,4 @@ spec:
     - name: metrics
       port: {{ .Values.kciss.port }}
       protocol: TCP
-      targetPort: {{ .Values.kciss.port }}
+      targetPort: {{ .Values.kciss.targetPort }}

@@ -5,6 +5,7 @@
 kciss:
   replicaCount: 1
   port: 9300
+  targetPort: 9300
   interval: 3600
   endpoint: "/kciss-metrics"
   image:
@@ -21,6 +22,22 @@ kciss:
   serviceAnnotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: "/kciss-metrics"
+  extraContainers: []
+  # - image: quay.io/oauth2-proxy/oauth2-proxy
+  #   name: oauth-proxy
+  #   args:
+  #     - '--config=/etc/oauth/oauth.conf'
+  #   ports:
+  #     - containerPort: 8081
+  #       name: proxy
+  #   volumeMounts:
+  #       - name: sso-oauth-config
+  #         mountPath: "/etc/oauth/oauth.conf"
+  extraVolumes: []
+  # - name: sso-oauth-config
+  #   configMap:
+  #     defaultMode: 420
+  #     name: sso-oauth-config
 
 trivy:
   replicaCount: 1
