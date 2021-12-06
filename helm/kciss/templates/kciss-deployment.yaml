@@ -56,10 +56,10 @@ spec:
       {{ if or .Values.customRootCertificate  .Values.kciss.extraVolumes -}}
       volumes:
         {{- if .Values.customRootCertificate }}
-        - name: ca-volume
-          configMap:
-            defaultMode: 420
-            name: {{ template "kciss.fullname" . }}-root-ca
+          - name: ca-volume
+            configMap:
+              defaultMode: 420
+              name: {{ template "kciss.fullname" . }}-root-ca
         {{ end }}
         {{- with .Values.kciss.extraVolumes }}
            {{- toYaml . | nindent 8 }}
