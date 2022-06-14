@@ -1,5 +1,5 @@
 ARG TRIVY_VERSION=0.19.2
-ARG ALPINE_VERSION=3.14.2
+ARG ALPINE_VERSION=3.14.6
 
 FROM ghcr.io/aquasecurity/trivy:$TRIVY_VERSION as trivy
 
@@ -15,7 +15,7 @@ ARG UID="2000"
 ARG GID="2000"
 LABEL org.opencontainers.image.source="https://github.com/sokube/kciss"
 LABEL org.opencontainers.image.authors="Sokube SA"
-RUN apk --no-cache add ca-certificates=20191127-r5 && \
+RUN apk --no-cache add ca-certificates=20211220-r0 && \
     addgroup -g "$GID" -S kciss && \
     adduser -S -u "$UID" -g "$GID" kciss
 COPY --from=trivy /usr/local/bin/trivy /usr/local/bin/trivy
