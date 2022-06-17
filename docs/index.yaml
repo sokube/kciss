@@ -10,7 +10,7 @@ entries:
     type: application
     urls:
         - https://sokube.github.io/kciss/kciss-0.2.1.tgz
-      version: 0.2.1
+    version: 0.2.1
   - apiVersion: v2
     appVersion: 0.1.3
     created: "2021-12-06T17:21:47.184490891+01:00"
