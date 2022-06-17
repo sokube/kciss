@@ -10,6 +10,16 @@ entries:
       type: application
       urls:
         - https://sokube.github.io/kciss/kciss-0.2.0.tgz
+      version: 0.2.1
+    - apiVersion: v2
+      appVersion: 0.1.3
+      created: "2021-12-06T17:21:47.184490891+01:00"
+      description: Kubernetes Continuous Image Scanning System
+      digest: f09b55f4880ea1208ffd0ffc31f93fbbee8850a72b742ff9e82f16a79e530432
+      name: kciss
+      type: application
+      urls:
+        - https://sokube.github.io/kciss/kciss-0.2.0.tgz
       version: 0.2.0
     - apiVersion: v2
       appVersion: 0.1.3
