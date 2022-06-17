@@ -9,7 +9,7 @@ entries:
       name: kciss
       type: application
       urls:
-        - https://sokube.github.io/kciss/kciss-0.2.0.tgz
+        - https://sokube.github.io/kciss/kciss-0.2.1.tgz
       version: 0.2.1
     - apiVersion: v2
       appVersion: 0.1.3
